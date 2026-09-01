@@ -267,8 +267,7 @@ void Material3Style::drawPrimitive(PrimitiveElement element, const QStyleOption 
             }
             painter->fillPath(path, fill);
         } else if (isEnabled && (isHovered || isPressed)) {
-            QColor fill = s.surfaceContainerHighest;
-            fill.setAlphaF(isPressed ? 0.12 : 0.08);
+            QColor fill = s.stateLayer(s.surface, s.onSurface, isPressed ? 0.12 : 0.08);
             painter->fillPath(path, fill);
         }
 

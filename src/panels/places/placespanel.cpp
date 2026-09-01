@@ -51,11 +51,14 @@ public:
         const bool isSelected = (option.state & QStyle::State_Selected);
         const bool isHovered = (option.state & QStyle::State_MouseOver);
 
-        // Draw MD3 Navigation Drawer indicator: 36dp height, 16dp radius pill
-        const int pillHeight = qBound(32, option.rect.height() - 4, 38);
-        const int pillY = option.rect.top() + (option.rect.height() - pillHeight) / 2;
-        const QRectF pillRect(option.rect.left() + 6, pillY, option.rect.width() - 12, pillHeight);
-        const qreal pillRadius = 16.0;
+        // FAgram MD3 Navigation Drawer Capsule Pill Metrics
+        constexpr qreal pillMarginX = 12.0;
+        constexpr qreal pillPaddingY = 3.0;
+        const QRectF pillRect(option.rect.left() + pillMarginX,
+                              option.rect.top() + pillPaddingY,
+                              option.rect.width() - 2.0 * pillMarginX,
+                              option.rect.height() - 2.0 * pillPaddingY);
+        const qreal pillRadius = pillRect.height() / 2.0; // Fully rounded capsule pill
 
         QPainterPath pillPath;
         pillPath.addRoundedRect(pillRect, pillRadius, pillRadius);
@@ -63,15 +66,14 @@ public:
         if (isSelected) {
             painter->fillPath(pillPath, s.secondaryContainer);
         } else if (isHovered) {
-            QColor hoverCol = s.onSurface;
-            hoverCol.setAlphaF(0.08);
-            painter->fillPath(pillPath, hoverCol);
+            painter->fillPath(pillPath, s.stateLayer(s.surfaceContainerLow, s.onSurface, 0.08));
         }
 
-        // Draw icon
+        // Draw icon with FAgram 16dp horizontal padding
         const QIcon icon = index.data(Qt::DecorationRole).value<QIcon>();
-        const int iconSize = 20;
-        const QRect iconRect(pillRect.left() + 12, pillRect.top() + (pillHeight - iconSize) / 2, iconSize, iconSize);
+        const int iconSize = 22;
+        const QRect iconRect(int(pillRect.left() + 16.0), int(pillRect.top() + (pillRect.height() - iconSize) / 2.0), iconSize, iconSize);
+
         if (!icon.isNull()) {
             QIcon::Mode mode = isSelected ? QIcon::Selected : (option.state & QStyle::State_Enabled ? QIcon::Normal : QIcon::Disabled);
             icon.paint(painter, iconRect, Qt::AlignCenter, mode);
@@ -79,7 +81,9 @@ public:
 
         // Draw text
         const QString text = index.data(Qt::DisplayRole).toString();
-        const QRect textRect(iconRect.right() + 12, pillRect.top(), pillRect.width() - (iconSize + 28), pillHeight);
+        const int textLeft = iconRect.right() + 14;
+        const QRect textRect(textLeft, int(pillRect.top()), int(pillRect.right() - textLeft - 12), int(pillRect.height()));
+
         QFont font = option.font;
         if (isSelected) {
             font.setWeight(QFont::DemiBold);
@@ -97,7 +101,7 @@ public:
     QSize sizeHint(const QStyleOptionViewItem &option, const QModelIndex &index) const override
     {
         QSize size = QStyledItemDelegate::sizeHint(option, index);
-        size.setHeight(qMax(size.height(), 40));
+        size.setHeight(qMax(size.height(), 48));
         return size;
     }
 };
