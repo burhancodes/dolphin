@@ -27,31 +27,33 @@ jobs:
             qt6-declarative \
             qt6-multimedia \
             qt6-tools \
-            kf6-kcoreaddons \
-            kf6-kconfig \
-            kf6-kbookmarks \
-            kf6-kcmutils \
-            kf6-kcompletion \
-            kf6-kconfigwidgets \
-            kf6-kcrash \
-            kf6-kdbusaddons \
-            kf6-kguiaddons \
-            kf6-ki18n \
-            kf6-kiconthemes \
-            kf6-kio \
-            kf6-kitemviews \
-            kf6-kjobwidgets \
-            kf6-knotifications \
-            kf6-kparts \
-            kf6-kservice \
-            kf6-ksolid \
-            kf6-ktextwidgets \
-            kf6-kwidgetsaddons \
-            kf6-kwindowsystem \
-            kf6-kcolorscheme \
-            kf6-kfilemetadata \
-            kf6-knewstuff \
-            kf6-kuserfeedback \
+            kcoreaddons \
+            kconfig \
+            kbookmarks \
+            kcmutils \
+            kcodecs \
+            kcompletion \
+            kconfigwidgets \
+            kcrash \
+            kdbusaddons \
+            kguiaddons \
+            ki18n \
+            kiconthemes \
+            kio \
+            kitemviews \
+            kjobwidgets \
+            knotifications \
+            kparts \
+            kservice \
+            solid \
+            ktextwidgets \
+            kwidgetsaddons \
+            kwindowsystem \
+            kcolorscheme \
+            kfilemetadata \
+            knewstuff \
+            kuserfeedback \
+            baloo \
             matugen
 
       - name: Checkout Repository
