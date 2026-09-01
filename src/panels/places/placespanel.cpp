@@ -27,89 +27,13 @@
 #include <QIcon>
 #include <QMenu>
 #include <QMimeData>
-#include <QPainter>
-#include <QPainterPath>
 #include <QShowEvent>
-#include <QStyledItemDelegate>
 
 #include <Solid/StorageAccess>
-
-class M3PlacesItemDelegate : public QStyledItemDelegate
-{
-public:
-    explicit M3PlacesItemDelegate(QObject *parent = nullptr)
-        : QStyledItemDelegate(parent)
-    {
-    }
-
-    void paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const override
-    {
-        const auto &s = M3ColorEngine::instance()->scheme();
-        painter->save();
-        painter->setRenderHint(QPainter::Antialiasing);
-
-        const bool isSelected = (option.state & QStyle::State_Selected);
-        const bool isHovered = (option.state & QStyle::State_MouseOver);
-
-        // FAgram MD3 Navigation Drawer Capsule Pill Metrics
-        constexpr qreal pillMarginX = 12.0;
-        constexpr qreal pillPaddingY = 3.0;
-        const QRectF pillRect(option.rect.left() + pillMarginX,
-                              option.rect.top() + pillPaddingY,
-                              option.rect.width() - 2.0 * pillMarginX,
-                              option.rect.height() - 2.0 * pillPaddingY);
-        const qreal pillRadius = pillRect.height() / 2.0; // Fully rounded capsule pill
-
-        QPainterPath pillPath;
-        pillPath.addRoundedRect(pillRect, pillRadius, pillRadius);
-
-        if (isSelected) {
-            painter->fillPath(pillPath, s.secondaryContainer);
-        } else if (isHovered) {
-            painter->fillPath(pillPath, s.stateLayer(s.surfaceContainerLow, s.onSurface, 0.08));
-        }
-
-        // Draw icon with FAgram 16dp horizontal padding
-        const QIcon icon = index.data(Qt::DecorationRole).value<QIcon>();
-        const int iconSize = 22;
-        const QRect iconRect(int(pillRect.left() + 16.0), int(pillRect.top() + (pillRect.height() - iconSize) / 2.0), iconSize, iconSize);
-
-        if (!icon.isNull()) {
-            QIcon::Mode mode = isSelected ? QIcon::Selected : (option.state & QStyle::State_Enabled ? QIcon::Normal : QIcon::Disabled);
-            icon.paint(painter, iconRect, Qt::AlignCenter, mode);
-        }
-
-        // Draw text
-        const QString text = index.data(Qt::DisplayRole).toString();
-        const int textLeft = iconRect.right() + 14;
-        const QRect textRect(textLeft, int(pillRect.top()), int(pillRect.right() - textLeft - 12), int(pillRect.height()));
-
-        QFont font = option.font;
-        if (isSelected) {
-            font.setWeight(QFont::DemiBold);
-            painter->setPen(s.onSecondaryContainer);
-        } else {
-            font.setWeight(QFont::Normal);
-            painter->setPen(s.onSurfaceVariant);
-        }
-        painter->setFont(font);
-        painter->drawText(textRect, Qt::AlignVCenter | Qt::AlignLeft, option.fontMetrics.elidedText(text, Qt::ElideRight, textRect.width()));
-
-        painter->restore();
-    }
-
-    QSize sizeHint(const QStyleOptionViewItem &option, const QModelIndex &index) const override
-    {
-        QSize size = QStyledItemDelegate::sizeHint(option, index);
-        size.setHeight(qMax(size.height(), 48));
-        return size;
-    }
-};
 
 PlacesPanel::PlacesPanel(QWidget *parent)
     : KFilePlacesView(parent)
 {
-    setItemDelegate(new M3PlacesItemDelegate(this));
     setDropOnPlaceEnabled(true);
     connect(this, &PlacesPanel::urlsDropped, this, &PlacesPanel::slotUrlsDropped);
 
