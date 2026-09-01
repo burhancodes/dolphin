@@ -59,6 +59,16 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Build & Install Patched KIO
+        run: |
+          git clone --depth 1 https://github.com/burhancodes/kio.git /tmp/kio
+          cmake -B /tmp/kio/build -S /tmp/kio \
+            -GNinja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DBUILD_TESTING=OFF \
+            -DCMAKE_INSTALL_PREFIX=/usr
+          ninja -C /tmp/kio/build install
+
       - name: Configure CMake
         run: |
           cmake -B build -S . \
