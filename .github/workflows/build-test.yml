@@ -54,7 +54,9 @@ jobs:
             knewstuff \
             kuserfeedback \
             baloo \
-            matugen
+            matugen \
+            xorg-server-xvfb \
+            dbus
 
       - name: Checkout Repository
         uses: actions/checkout@v6
@@ -83,8 +85,12 @@ jobs:
           ninja -C build -j$(nproc)
 
       - name: Run Unit Tests
+        env:
+          QT_QPA_PLATFORM: offscreen
+          XDG_RUNTIME_DIR: /tmp/runtime-root
         run: |
-          ctest --test-dir build --output-on-failure
+          mkdir -p /tmp/runtime-root && chmod 0700 /tmp/runtime-root
+          dbus-run-session ctest --test-dir build --output-on-failure
 
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v6
