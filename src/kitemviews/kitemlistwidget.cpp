@@ -641,22 +641,27 @@ void KItemListWidget::drawItemStyleOption(QPainter *painter, QWidget *widget, QS
     const auto &scheme = M3ColorEngine::instance()->scheme();
     painter->setRenderHint(QPainter::Antialiasing);
 
-    constexpr qreal radius = 12.0; // 12dp MD3 card corner radius
-    constexpr qreal penWidth = 1.0;
+    constexpr qreal radius = 16.0; // 16dp MD3 card corner radius
+    constexpr qreal penWidth = 1.5;
     QPainterPath path;
     const QRectF cardRect = selectionRectFull().adjusted(2.0, 2.0, -2.0, -2.0);
     path.addRoundedRect(cardRect, radius, radius);
 
     if (m_selected) {
-        // Active file/folder selection: primary-container fill with subtle 1px primary outline
+        // Active file/folder selection: primary-container fill with primary outline
         painter->fillPath(path, scheme.primaryContainer);
         QPen pen(scheme.primary, penWidth);
         painter->strokePath(path, pen);
     } else if (m_hovered) {
-        // Card hover / highlight base: surface-container-highest / 8% state layer
-        QColor hoverColor = scheme.surfaceContainerHighest;
-        hoverColor.setAlphaF(0.65);
-        painter->fillPath(path, hoverColor);
+        // Card hover: 8% state layer with outline-variant border
+        painter->fillPath(path, scheme.stateLayer(scheme.surfaceContainerLowest, scheme.onSurface, 0.08));
+        QPen pen(scheme.outlineVariant, 1.0);
+        painter->strokePath(path, pen);
+    } else {
+        // Subtle elevated card background for clear MD3 card container contrast
+        painter->fillPath(path, scheme.stateLayer(scheme.surfaceContainerLowest, scheme.surfaceContainer, 0.45));
+        QPen pen(scheme.stateLayer(scheme.surfaceContainerLowest, scheme.outlineVariant, 0.30), 0.75);
+        painter->strokePath(path, pen);
     }
 
     // Focus decoration

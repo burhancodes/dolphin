@@ -9,6 +9,7 @@
 #include <QComboBox>
 #include <QFocusFrame>
 #include <QLineEdit>
+#include <QListView>
 #include <QMenu>
 #include <QPainter>
 #include <QPainterPath>
@@ -329,28 +330,50 @@ void Material3Style::drawPrimitive(PrimitiveElement element, const QStyleOption 
         const bool isHovered = option->state & State_MouseOver;
         const bool hasFocus = option->state & State_HasFocus;
 
+        const bool isPlacesOrList = widget && (widget->inherits("KFilePlacesView") || widget->inherits("QListView") || qobject_cast<const QListView *>(widget));
+
         QRectF r = option->rect;
-        r.adjust(2.0, 2.0, -2.0, -2.0);
-        const qreal radius = 12.0; // 12dp MD3 card corner radius
 
-        QPainterPath path;
-        path.addRoundedRect(r, radius, radius);
+        if (isPlacesOrList) {
+            // FAgram MD3 Navigation Drawer Capsule Pill Metrics
+            constexpr qreal marginX = 8.0;
+            constexpr qreal paddingY = 3.0;
+            r.adjust(marginX, paddingY, -marginX, -paddingY);
+            const qreal radius = r.height() / 2.0;
 
-        if (isSelected) {
-            // primary-container fill with subtle 1px primary outline
-            painter->fillPath(path, s.primaryContainer);
-            QPen pen(s.primary, 1.0);
-            painter->strokePath(path, pen);
-        } else if (isHovered) {
-            // surface-container-highest / 8% state layer
-            QColor hoverColor = s.surfaceContainerHighest;
-            hoverColor.setAlphaF(0.60);
-            painter->fillPath(path, hoverColor);
-        }
+            QPainterPath path;
+            path.addRoundedRect(r, radius, radius);
 
-        if (hasFocus && !isSelected) {
-            QPen pen(s.primary, 1.5);
-            painter->strokePath(path, pen);
+            if (isSelected) {
+                painter->fillPath(path, s.secondaryContainer);
+            } else if (isHovered) {
+                painter->fillPath(path, s.stateLayer(s.surfaceContainerLow, s.onSurface, 0.08));
+            }
+
+            if (hasFocus && !isSelected) {
+                QPen pen(s.primary, 1.5);
+                painter->strokePath(path, pen);
+            }
+        } else {
+            // MD3 Standard Card for tables, trees, etc.
+            r.adjust(2.0, 2.0, -2.0, -2.0);
+            constexpr qreal radius = 12.0;
+
+            QPainterPath path;
+            path.addRoundedRect(r, radius, radius);
+
+            if (isSelected) {
+                painter->fillPath(path, s.primaryContainer);
+                QPen pen(s.primary, 1.0);
+                painter->strokePath(path, pen);
+            } else if (isHovered) {
+                painter->fillPath(path, s.stateLayer(s.surfaceContainerLowest, s.onSurface, 0.08));
+            }
+
+            if (hasFocus && !isSelected) {
+                QPen pen(s.primary, 1.5);
+                painter->strokePath(path, pen);
+            }
         }
 
         painter->restore();
@@ -632,6 +655,41 @@ void Material3Style::drawControl(ControlElement element, const QStyleOption *opt
         painter->setFont(font);
 
         painter->drawText(headerOpt->rect, Qt::AlignLeft | Qt::AlignVCenter, headerOpt->text);
+        painter->restore();
+        break;
+    }
+
+    case CE_ItemViewItem: {
+        const auto vopt = qstyleoption_cast<const QStyleOptionViewItem *>(option);
+        if (!vopt)
+            break;
+
+        drawPrimitive(PE_PanelItemViewItem, option, painter, widget);
+
+        painter->save();
+        const bool isSelected = option->state & State_Selected;
+        const bool isEnabled = option->state & State_Enabled;
+
+        QRect textRect = subElementRect(SE_ItemViewItemText, option, widget);
+        QRect iconRect = subElementRect(SE_ItemViewItemDecoration, option, widget);
+
+        if (!vopt->icon.isNull() && iconRect.isValid()) {
+            QIcon::Mode mode = isSelected ? QIcon::Selected : (isEnabled ? QIcon::Normal : QIcon::Disabled);
+            vopt->icon.paint(painter, iconRect, Qt::AlignCenter, mode);
+        }
+
+        if (!vopt->text.isEmpty() && textRect.isValid()) {
+            QFont font = vopt->font;
+            if (isSelected) {
+                font.setWeight(QFont::DemiBold);
+                painter->setPen(s.onSecondaryContainer);
+            } else {
+                painter->setPen(isEnabled ? s.onSurface : s.onSurfaceVariant);
+            }
+            painter->setFont(font);
+            painter->drawText(textRect, vopt->displayAlignment, vopt->text);
+        }
+
         painter->restore();
         break;
     }
