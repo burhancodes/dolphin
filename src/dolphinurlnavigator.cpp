@@ -167,6 +167,15 @@ void DolphinUrlNavigator::slotReturnPressed()
     }
 }
 
+void DolphinUrlNavigator::keyPressEvent(QKeyEvent *keyEvent)
+{
+    if (keyEvent->key() == Qt::Key_Escape && !isUrlEditable()) {
+        Q_EMIT requestToLoseFocus();
+        return;
+    }
+    KUrlNavigator::keyPressEvent(keyEvent);
+}
+
 void DolphinUrlNavigator::paintEvent(QPaintEvent *event)
 {
     QPainter painter(this);
