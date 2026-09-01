@@ -1,4 +1,4 @@
-name: Build and Test (Arch Linux)
+name: Build (Arch Linux)
 
 on:
   push:
@@ -7,8 +7,8 @@ on:
     branches: [ "**" ]
 
 jobs:
-  build-and-test:
-    name: Build & Test (Arch Linux Latest)
+  build:
+    name: Build on Arch Linux
     runs-on: ubuntu-latest
     container:
       image: archlinux:latest
