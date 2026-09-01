@@ -276,6 +276,9 @@ void DolphinItemListViewTest::testTheFilesOnScreenStayOnScreenWhenTheViewGetsNar
                             .arg(topItem)
                             .arg(m_view->firstVisibleIndex())
                             .arg(m_view->lastVisibleIndex())));
+
+    m_view = nullptr;
+    m_model = nullptr;
 }
 
 /**
@@ -311,6 +314,7 @@ void DolphinItemListViewTest::testTheViewComesBackToWhereItWasWhenTheWidthDoes()
     m_view->setScrollOffset(m_view->maximumScrollOffset() / 2);
     const int topItem = m_view->firstVisibleIndex();
     const qreal offset = m_view->scrollOffset();
+    const qreal initialWidth = m_view->size().width();
     QVERIFY(topItem > 0);
 
     // The width is walked down and back up the way the split view animation walks it.
@@ -323,13 +327,17 @@ void DolphinItemListViewTest::testTheViewComesBackToWhereItWasWhenTheWidthDoes()
             container.resize(width, 600);
             QCoreApplication::processEvents();
         }
-        QVERIFY(QTest::qWaitFor([this]() {
-            return m_view->size().width() > 700;
+        QVERIFY(QTest::qWaitFor([this, initialWidth]() {
+            QCoreApplication::processEvents();
+            return qAbs(m_view->size().width() - initialWidth) < 2.0;
         }));
 
         QCOMPARE(m_view->firstVisibleIndex(), topItem);
         QCOMPARE(m_view->scrollOffset(), offset);
     }
+
+    m_view = nullptr;
+    m_model = nullptr;
 }
 
 QTEST_MAIN(DolphinItemListViewTest)

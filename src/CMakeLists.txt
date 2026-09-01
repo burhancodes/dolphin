@@ -125,6 +125,8 @@ target_sources(dolphinprivate PRIVATE
     dolphinremoveaction.cpp
     middleclickactioneventfilter.cpp
     dolphinnewfilemenu.cpp
+    m3colorengine.cpp
+    material3style.cpp
 
     kitemviews/kfileitemlistview.h
     kitemviews/kfileitemlistwidget.h
@@ -179,6 +181,8 @@ target_sources(dolphinprivate PRIVATE
     dolphinremoveaction.h
     middleclickactioneventfilter.h
     dolphinnewfilemenu.h
+    m3colorengine.h
+    material3style.h
 )
 
 ecm_qt_declare_logging_category(dolphinprivate

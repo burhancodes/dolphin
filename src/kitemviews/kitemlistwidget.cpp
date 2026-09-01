@@ -9,6 +9,7 @@
 #include "kitemlistwidget.h"
 
 #include "kitemlistview.h"
+#include "m3colorengine.h"
 #include "private/kitemlistselectiontoggle.h"
 
 #include <KConfigGroup>
@@ -637,59 +638,33 @@ void KItemListWidget::drawItemStyleOption(QPainter *painter, QWidget *widget, QS
     viewItemOption.rect = selectionRectFull().toRect();
     const bool current = m_current && styleState & QStyle::State_Active;
 
-    // TODO: Remove this check after Plasma 6.8 release
-    // See: https://invent.kde.org/plasma/breeze/-/merge_requests/595
-    if (style()->name() == QStringLiteral("breeze")) {
-        QColor backgroundColor{widget->palette().color(QPalette::Highlight)};
-        backgroundColor.setAlphaF(0.0);
-        if (m_clickHighlighted) {
-            backgroundColor.setAlphaF(1.0);
-        } else {
-            if (m_selected && m_hovered) {
-                backgroundColor.setAlphaF(0.40);
-            } else if (m_selected) {
-                backgroundColor.setAlphaF(0.32);
-            } else if (m_hovered) {
-                backgroundColor = widget->palette().color(QPalette::Text);
-                backgroundColor.setAlphaF(0.06);
-            }
-        }
-        painter->setRenderHint(QPainter::Antialiasing);
-        constexpr int roundness = 5; // From Breeze style.
-        constexpr qreal penWidth = 1.25;
-        QPainterPath path;
-        const qreal adjustment = 0.5 * penWidth; // Use same adjustments as Breeze strokedRect uses, to snap to pixelGrid.
-        path.addRoundedRect(selectionRectFull().adjusted(adjustment, adjustment, -adjustment, -adjustment), roundness, roundness);
-        painter->fillPath(path, backgroundColor);
+    const auto &scheme = M3ColorEngine::instance()->scheme();
+    painter->setRenderHint(QPainter::Antialiasing);
 
-        // Focus decoration
-        if (current) {
-            QColor focusColor{widget->palette().color(QPalette::Highlight)};
-            // Set the pen color lighter or darker depending on background color
-            focusColor = m_styleOption.palette.color(QPalette::Base).lightnessF() > 0.5 ? focusColor.darker(110) : focusColor.lighter(110);
-            focusColor.setAlphaF(m_selected || m_hovered ? 1.0 : 0.8);
-            QPen pen{focusColor, penWidth};
-            pen.setCosmetic(true);
-            painter->strokePath(path, pen);
-        }
-    } else {
-        style()->drawPrimitive(QStyle::PE_PanelItemViewItem, &viewItemOption, painter, widget);
+    constexpr qreal radius = 12.0; // 12dp MD3 card corner radius
+    constexpr qreal penWidth = 1.0;
+    QPainterPath path;
+    const QRectF cardRect = selectionRectFull().adjusted(2.0, 2.0, -2.0, -2.0);
+    path.addRoundedRect(cardRect, radius, radius);
 
-        // Focus decoration
-        if (current) {
-            QStyleOptionFocusRect focusRectOption;
-            initStyleOption(&focusRectOption);
-            focusRectOption.state = QStyle::State_HasFocus;
-            if (m_selected && widget->hasFocus()) {
-                focusRectOption.state = QStyle::State_HasFocus | QStyle::State_Selected;
-            }
-            if (m_hovered) {
-                focusRectOption.state |= QStyle::State_MouseOver;
-            }
-            focusRectOption.rect = viewItemOption.rect;
-            style()->drawPrimitive(QStyle::PE_FrameFocusRect, &focusRectOption, painter, widget);
-        }
+    if (m_selected) {
+        // Active file/folder selection: primary-container fill with subtle 1px primary outline
+        painter->fillPath(path, scheme.primaryContainer);
+        QPen pen(scheme.primary, penWidth);
+        painter->strokePath(path, pen);
+    } else if (m_hovered) {
+        // Card hover / highlight base: surface-container-highest / 8% state layer
+        QColor hoverColor = scheme.surfaceContainerHighest;
+        hoverColor.setAlphaF(0.65);
+        painter->fillPath(path, hoverColor);
     }
+
+    // Focus decoration
+    if (current && !m_selected) {
+        QPen pen(scheme.primary, 1.5);
+        painter->strokePath(path, pen);
+    }
+
     painter->restore();
 }
 

@@ -1,0 +1,86 @@
+name: Build and Test (Arch Linux)
+
+on:
+  push:
+    branches: [ "**" ]
+  pull_request:
+    branches: [ "**" ]
+
+jobs:
+  build-and-test:
+    name: Build & Test (Arch Linux Latest)
+    runs-on: ubuntu-latest
+    container:
+      image: archlinux:latest
+
+    steps:
+      - name: Update System & Install Dependencies
+        run: |
+          pacman -Syu --noconfirm
+          pacman -S --noconfirm --needed \
+            base-devel \
+            git \
+            cmake \
+            ninja \
+            extra-cmake-modules \
+            qt6-base \
+            qt6-declarative \
+            qt6-multimedia \
+            qt6-tools \
+            kf6-kcoreaddons \
+            kf6-kconfig \
+            kf6-kbookmarks \
+            kf6-kcmutils \
+            kf6-kcompletion \
+            kf6-kconfigwidgets \
+            kf6-kcrash \
+            kf6-kdbusaddons \
+            kf6-kguiaddons \
+            kf6-ki18n \
+            kf6-kiconthemes \
+            kf6-kio \
+            kf6-kitemviews \
+            kf6-kjobwidgets \
+            kf6-knotifications \
+            kf6-kparts \
+            kf6-kservice \
+            kf6-ksolid \
+            kf6-ktextwidgets \
+            kf6-kwidgetsaddons \
+            kf6-kwindowsystem \
+            kf6-kcolorscheme \
+            kf6-kfilemetadata \
+            kf6-knewstuff \
+            kf6-kuserfeedback \
+            matugen
+
+      - name: Checkout Repository
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+
+      - name: Configure CMake
+        run: |
+          cmake -B build -S . \
+            -GNinja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DBUILD_TESTING=ON
+
+      - name: Build Targets
+        run: |
+          ninja -C build -j$(nproc)
+
+      - name: Run Unit Tests
+        run: |
+          ctest --test-dir build --output-on-failure
+
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: dolphin-archlinux-x86_64
+          path: |
+            build/bin/dolphin
+            build/bin/libdolphinprivate.so*
+            build/bin/m3colorenginetest
+          if-no-files-found: warn

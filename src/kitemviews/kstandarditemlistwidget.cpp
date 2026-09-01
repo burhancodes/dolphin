@@ -8,6 +8,7 @@
 
 #include "dolphin_contentdisplaysettings.h"
 #include "kfileitemlistview.h"
+#include "m3colorengine.h"
 #include "private/kfileitemclipboard.h"
 #include "private/kitemlistroleeditor.h"
 #include "private/kitemviewsutils.h"
@@ -24,6 +25,7 @@
 #include <QGraphicsScene>
 #include <QGraphicsSceneResizeEvent>
 #include <QGraphicsView>
+#include <QPainterPath>
 #include <QPixmapCache>
 #include <QStyleOption>
 #include <QTextBoundaryFinder>
@@ -400,7 +402,9 @@ void KStandardItemListWidget::paint(QPainter *painter, const QStyleOptionGraphic
         drawOverlays(painter);
     }
 
-    painter->setFont(m_customizedFont);
+    QFont titleFont = m_customizedFont;
+    titleFont.setWeight(QFont::DemiBold);
+    painter->setFont(titleFont);
     painter->setPen(textColor(*widget));
     const TextInfo *textInfo = m_textInfo.value("text");
 
@@ -439,8 +443,10 @@ void KStandardItemListWidget::paint(QPainter *painter, const QStyleOptionGraphic
         }
     }
 
+    QFont metaFont = m_customizedFont;
+    metaFont.setWeight(QFont::Normal);
+    painter->setFont(metaFont);
     painter->setPen(m_additionalInfoTextColor);
-    painter->setFont(m_customizedFont);
 
     for (int i = 1; i < m_sortedVisibleRoles.count(); ++i) {
         const TextInfo *textInfo = m_textInfo.value(m_sortedVisibleRoles[i]);
@@ -1658,6 +1664,15 @@ void KStandardItemListWidget::drawOverlays(QPainter *painter) const
 
 void KStandardItemListWidget::drawPixmap(QPainter *painter, const QPixmap &pixmap)
 {
+    painter->save();
+    painter->setRenderHint(QPainter::Antialiasing);
+
+    // Apply strict 8dp anti-aliased path clip to thumbnails and file previews
+    const QRectF pixmapRect(m_pixmapPos, m_scaledPixmapSize);
+    QPainterPath clipPath;
+    clipPath.addRoundedRect(pixmapRect, 8.0, 8.0);
+    painter->setClipPath(clipPath, Qt::IntersectClip);
+
     if (m_scaledPixmapSize != pixmap.size() / pixmap.devicePixelRatio()) {
         const qreal dpr = KItemViewsUtils::devicePixelRatio(this);
         QPixmap scaledPixmap = pixmap;
@@ -1672,6 +1687,8 @@ void KStandardItemListWidget::drawPixmap(QPainter *painter, const QPixmap &pixma
     } else {
         painter->drawPixmap(m_pixmapPos, pixmap);
     }
+
+    painter->restore();
 }
 
 void KStandardItemListWidget::drawSiblingsInformation(QPainter *painter)

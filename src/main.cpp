@@ -14,6 +14,8 @@
 #include "dolphindebug.h"
 #include "dolphinmainwindow.h"
 #include "global.h"
+#include "m3colorengine.h"
+#include "material3style.h"
 #if HAVE_KUSERFEEDBACK
 #include "userfeedback/dolphinfeedbackprovider.h"
 #endif
@@ -75,20 +77,11 @@ int main(int argc, char **argv)
     QApplication app(argc, argv);
     app.setWindowIcon(QIcon::fromTheme(QStringLiteral("org.kde.dolphin"), app.windowIcon()));
 
-#if HAVE_STYLE_MANAGER
-    /**
-     * trigger initialisation of proper application style
-     */
-    KStyleManager::initStyle();
-#else
-    /**
-     * For Windows and macOS: use Breeze if available
-     * Of all tested styles that works the best for us
-     */
-#if defined(Q_OS_MACOS) || defined(Q_OS_WIN)
-    QApplication::setStyle(QStringLiteral("breeze"));
-#endif
-#endif
+    // Initialize Material Design 3 (Material You) native QStyle and color engine
+    M3ColorEngine *colorEngine = M3ColorEngine::instance();
+    QApplication::setStyle(new Material3Style());
+    QApplication::setPalette(colorEngine->generateQPalette());
+    QDBusConnection::sessionBus().registerObject(QStringLiteral("/M3ColorEngine"), colorEngine, QDBusConnection::ExportScriptableSlots);
 
     KLocalizedString::setApplicationDomain(dolphinTranslationDomain);
 

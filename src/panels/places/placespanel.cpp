@@ -14,6 +14,7 @@
 #include "dolphin_generalsettings.h"
 #include "dolphin_placespanelsettings.h"
 #include "dolphinplacesmodelsingleton.h"
+#include "m3colorengine.h"
 #include "settings/dolphinsettingsdialog.h"
 #include "views/draganddrophelper.h"
 
@@ -83,6 +84,22 @@ PlacesPanel::PlacesPanel(QWidget *parent)
     for (int i = 0; i < model()->rowCount(); ++i) {
         connectDeviceSignals(model()->index(i, 0, QModelIndex()));
     }
+
+    auto updatePlacesPalette = [this]() {
+        const auto &s = M3ColorEngine::instance()->scheme();
+        QPalette p = palette();
+        p.setColor(QPalette::Window, s.surfaceContainerLow);
+        p.setColor(QPalette::Base, s.surfaceContainerLow);
+        p.setColor(QPalette::Highlight, s.secondaryContainer);
+        p.setColor(QPalette::HighlightedText, s.onSecondaryContainer);
+        p.setColor(QPalette::Text, s.onSurfaceVariant);
+        setPalette(p);
+        if (viewport()) {
+            viewport()->setPalette(p);
+        }
+    };
+    updatePlacesPalette();
+    connect(M3ColorEngine::instance(), &M3ColorEngine::colorsChanged, this, updatePlacesPalette);
 }
 
 PlacesPanel::~PlacesPanel() = default;

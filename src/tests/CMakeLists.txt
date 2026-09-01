@@ -9,6 +9,9 @@ include(ECMAddTests)
 
 include(FindGem)  # For servicemenutest, see bottom of this file
 
+# M3ColorEngineTest
+ecm_add_test(m3colorenginetest.cpp LINK_LIBRARIES dolphinprivate Qt6::Test)
+
 # KItemSetTest
 ecm_add_test(kitemsettest.cpp LINK_LIBRARIES dolphinprivate Qt6::Test)
 
