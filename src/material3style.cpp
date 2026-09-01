@@ -22,6 +22,7 @@
 #include <QStyleOptionToolButton>
 #include <QStyleOptionViewItem>
 #include <QTabBar>
+#include <QToolBar>
 #include <QToolButton>
 #include <QWidget>
 #include <QtMath>
@@ -43,6 +44,8 @@ void Material3Style::polish(QWidget *widget)
     if (!widget)
         return;
 
+    const auto &s = scheme();
+
     if (qobject_cast<QLineEdit *>(widget) || qobject_cast<QComboBox *>(widget)) {
         widget->setAttribute(Qt::WA_Hover, true);
     } else if (qobject_cast<QAbstractButton *>(widget)) {
@@ -50,6 +53,12 @@ void Material3Style::polish(QWidget *widget)
     } else if (qobject_cast<QMenu *>(widget)) {
         widget->setAttribute(Qt::WA_TranslucentBackground, true);
         widget->setWindowFlags(widget->windowFlags() | Qt::FramelessWindowHint);
+    } else if (qobject_cast<QToolBar *>(widget)) {
+        QPalette p = widget->palette();
+        p.setColor(QPalette::Window, s.surface);
+        p.setColor(QPalette::Base, s.surface);
+        p.setColor(QPalette::Button, s.surface);
+        widget->setPalette(p);
     }
 
     QCommonStyle::polish(widget);

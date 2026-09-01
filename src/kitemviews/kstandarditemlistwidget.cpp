@@ -698,7 +698,7 @@ QFont KStandardItemListWidget::customizedFont(const QFont &baseFont) const
 
 QPalette::ColorRole KStandardItemListWidget::normalTextColorRole() const
 {
-    if (isPressed()) {
+    if (isSelected() || isPressed()) {
         return QPalette::HighlightedText;
     } else {
         return QPalette::Text;

@@ -187,13 +187,20 @@ void M3ColorEngine::setupWatcher()
         m_fileWatcher.removePaths(dirs);
     }
 
-    QFileInfo fi(m_colorsFilePath);
-    if (fi.exists()) {
-        m_fileWatcher.addPath(m_colorsFilePath);
-    }
-    const QString dirPath = fi.dir().absolutePath();
-    if (QDir(dirPath).exists()) {
-        m_fileWatcher.addPath(dirPath);
+    const QString home = QDir::homePath();
+    const QStringList candidates = {m_colorsFilePath,
+                                    home + QStringLiteral("/.local/state/quickshell/user/generated/colors.json"),
+                                    QStandardPaths::writableLocation(QStandardPaths::GenericCacheLocation) + QStringLiteral("/matugen/colors.json"),
+                                    home + QStringLiteral("/.config/matugen/colors.json")};
+
+    for (const QString &path : candidates) {
+        if (QFile::exists(path)) {
+            m_fileWatcher.addPath(path);
+        }
+        const QString dirPath = QFileInfo(path).dir().absolutePath();
+        if (QDir(dirPath).exists() && !m_fileWatcher.directories().contains(dirPath)) {
+            m_fileWatcher.addPath(dirPath);
+        }
     }
 
     connect(&m_fileWatcher, &QFileSystemWatcher::fileChanged, this, &M3ColorEngine::onFileChanged, Qt::UniqueConnection);
@@ -203,19 +210,14 @@ void M3ColorEngine::setupWatcher()
 void M3ColorEngine::onFileChanged(const QString &path)
 {
     Q_UNUSED(path)
-    // Re-add path in case editor replaced the inode
-    if (QFile::exists(m_colorsFilePath) && !m_fileWatcher.files().contains(m_colorsFilePath)) {
-        m_fileWatcher.addPath(m_colorsFilePath);
-    }
+    setupWatcher();
     reloadColors();
 }
 
 void M3ColorEngine::onDirectoryChanged(const QString &path)
 {
     Q_UNUSED(path)
-    if (QFile::exists(m_colorsFilePath) && !m_fileWatcher.files().contains(m_colorsFilePath)) {
-        m_fileWatcher.addPath(m_colorsFilePath);
-    }
+    setupWatcher();
     reloadColors();
 }
 
@@ -443,14 +445,26 @@ void M3ColorEngine::reloadColors()
     timer.start();
 
     M3ColorScheme newScheme;
-    const bool parsed = parseJsonFile(m_colorsFilePath, newScheme);
-    if (parsed) {
-        m_scheme = newScheme;
-    } else {
-        // Retain fallback dark or light scheme
-        if (m_scheme.surface.isValid()) {
-            // Keep existing
-        } else {
+    bool parsed = false;
+
+    const QString home = QDir::homePath();
+    const QStringList candidates = {m_colorsFilePath,
+                                    home + QStringLiteral("/.local/state/quickshell/user/generated/colors.json"),
+                                    QStandardPaths::writableLocation(QStandardPaths::GenericCacheLocation) + QStringLiteral("/matugen/colors.json"),
+                                    home + QStringLiteral("/.config/matugen/colors.json")};
+
+    for (const QString &path : candidates) {
+        if (QFile::exists(path)) {
+            parsed = parseJsonFile(path, newScheme);
+            if (parsed) {
+                m_scheme = newScheme;
+                break;
+            }
+        }
+    }
+
+    if (!parsed) {
+        if (!m_scheme.surface.isValid()) {
             m_scheme = M3ColorScheme::defaultDark();
         }
     }

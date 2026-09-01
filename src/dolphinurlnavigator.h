@@ -104,6 +104,7 @@ protected:
      * Return focus back to the view when pressing Escape and this would have no other effect (e.g. deselecting or changing edit mode).
      */
     void keyPressEvent(QKeyEvent *keyEvent) override;
+    void paintEvent(QPaintEvent *event) override;
 };
 
 #endif // DOLPHINURLNAVIGATOR_H

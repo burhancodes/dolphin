@@ -27,13 +27,85 @@
 #include <QIcon>
 #include <QMenu>
 #include <QMimeData>
+#include <QPainter>
+#include <QPainterPath>
 #include <QShowEvent>
+#include <QStyledItemDelegate>
 
 #include <Solid/StorageAccess>
+
+class M3PlacesItemDelegate : public QStyledItemDelegate
+{
+public:
+    explicit M3PlacesItemDelegate(QObject *parent = nullptr)
+        : QStyledItemDelegate(parent)
+    {
+    }
+
+    void paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const override
+    {
+        const auto &s = M3ColorEngine::instance()->scheme();
+        painter->save();
+        painter->setRenderHint(QPainter::Antialiasing);
+
+        const bool isSelected = (option.state & QStyle::State_Selected);
+        const bool isHovered = (option.state & QStyle::State_MouseOver);
+
+        // Draw MD3 Navigation Drawer indicator: 36dp height, 16dp radius pill
+        const int pillHeight = qBound(32, option.rect.height() - 4, 38);
+        const int pillY = option.rect.top() + (option.rect.height() - pillHeight) / 2;
+        const QRectF pillRect(option.rect.left() + 6, pillY, option.rect.width() - 12, pillHeight);
+        const qreal pillRadius = 16.0;
+
+        QPainterPath pillPath;
+        pillPath.addRoundedRect(pillRect, pillRadius, pillRadius);
+
+        if (isSelected) {
+            painter->fillPath(pillPath, s.secondaryContainer);
+        } else if (isHovered) {
+            QColor hoverCol = s.onSurface;
+            hoverCol.setAlphaF(0.08);
+            painter->fillPath(pillPath, hoverCol);
+        }
+
+        // Draw icon
+        const QIcon icon = index.data(Qt::DecorationRole).value<QIcon>();
+        const int iconSize = 20;
+        const QRect iconRect(pillRect.left() + 12, pillRect.top() + (pillHeight - iconSize) / 2, iconSize, iconSize);
+        if (!icon.isNull()) {
+            QIcon::Mode mode = isSelected ? QIcon::Selected : (option.state & QStyle::State_Enabled ? QIcon::Normal : QIcon::Disabled);
+            icon.paint(painter, iconRect, Qt::AlignCenter, mode);
+        }
+
+        // Draw text
+        const QString text = index.data(Qt::DisplayRole).toString();
+        const QRect textRect(iconRect.right() + 12, pillRect.top(), pillRect.width() - (iconSize + 28), pillHeight);
+        QFont font = option.font;
+        if (isSelected) {
+            font.setWeight(QFont::DemiBold);
+            painter->setPen(s.onSecondaryContainer);
+        } else {
+            font.setWeight(QFont::Normal);
+            painter->setPen(s.onSurfaceVariant);
+        }
+        painter->setFont(font);
+        painter->drawText(textRect, Qt::AlignVCenter | Qt::AlignLeft, option.fontMetrics.elidedText(text, Qt::ElideRight, textRect.width()));
+
+        painter->restore();
+    }
+
+    QSize sizeHint(const QStyleOptionViewItem &option, const QModelIndex &index) const override
+    {
+        QSize size = QStyledItemDelegate::sizeHint(option, index);
+        size.setHeight(qMax(size.height(), 40));
+        return size;
+    }
+};
 
 PlacesPanel::PlacesPanel(QWidget *parent)
     : KFilePlacesView(parent)
 {
+    setItemDelegate(new M3PlacesItemDelegate(this));
     setDropOnPlaceEnabled(true);
     connect(this, &PlacesPanel::urlsDropped, this, &PlacesPanel::slotUrlsDropped);
 

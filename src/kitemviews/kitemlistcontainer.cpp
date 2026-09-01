@@ -10,6 +10,7 @@
 
 #include "kitemlistcontroller.h"
 #include "kitemlistview.h"
+#include "m3colorengine.h"
 #include "private/kitemlistsmoothscroller.h"
 
 #ifndef QT_NO_ACCESSIBILITY
@@ -66,7 +67,12 @@ KItemListContainer::KItemListContainer(KItemListController *controller, QWidget 
     controller->setParent(this);
 
     QGraphicsView *graphicsView = new KItemListContainerViewport(new QGraphicsScene(this), this);
+    graphicsView->setBackgroundBrush(M3ColorEngine::instance()->scheme().surfaceContainerLowest);
     setViewport(graphicsView);
+
+    connect(M3ColorEngine::instance(), &M3ColorEngine::colorsChanged, this, [graphicsView]() {
+        graphicsView->setBackgroundBrush(M3ColorEngine::instance()->scheme().surfaceContainerLowest);
+    });
 
     m_horizontalSmoothScroller = new KItemListSmoothScroller(horizontalScrollBar(), this);
     m_verticalSmoothScroller = new KItemListSmoothScroller(verticalScrollBar(), this);

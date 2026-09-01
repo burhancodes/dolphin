@@ -11,6 +11,7 @@
 #include "dolphinplacesmodelsingleton.h"
 #include "dolphinurlnavigatorscontroller.h"
 #include "global.h"
+#include "m3colorengine.h"
 
 #include <KLocalizedString>
 #include <KUrlComboBox>
@@ -20,6 +21,8 @@
 #include <QLabel>
 #include <QLayout>
 #include <QLineEdit>
+#include <QPainter>
+#include <QPainterPath>
 
 DolphinUrlNavigator::DolphinUrlNavigator(QWidget *parent)
     : DolphinUrlNavigator(QUrl(), parent)
@@ -51,6 +54,24 @@ DolphinUrlNavigator::DolphinUrlNavigator(const QUrl &url, QWidget *parent)
     DolphinUrlNavigatorsController::registerDolphinUrlNavigator(this);
 
     connect(this, &KUrlNavigator::returnPressed, this, &DolphinUrlNavigator::slotReturnPressed);
+
+    auto updateNavPalette = [this]() {
+        const auto &s = M3ColorEngine::instance()->scheme();
+        QPalette p = palette();
+        p.setColor(QPalette::Window, s.surfaceContainer);
+        p.setColor(QPalette::Base, s.surfaceContainer);
+        p.setColor(QPalette::Button, s.surfaceContainer);
+        p.setColor(QPalette::ButtonText, s.onSurface);
+        p.setColor(QPalette::Text, s.onSurface);
+        p.setColor(QPalette::Highlight, s.primary);
+        p.setColor(QPalette::HighlightedText, s.onPrimary);
+        setPalette(p);
+        if (editor() && editor()->lineEdit()) {
+            editor()->lineEdit()->setPalette(p);
+        }
+    };
+    updateNavPalette();
+    connect(M3ColorEngine::instance(), &M3ColorEngine::colorsChanged, this, updateNavPalette);
 
     auto readOnlyBadge = new QLabel();
     readOnlyBadge->setPixmap(QIcon::fromTheme(QStringLiteral("emblem-readonly")).pixmap(12, 12));
@@ -146,13 +167,31 @@ void DolphinUrlNavigator::slotReturnPressed()
     }
 }
 
-void DolphinUrlNavigator::keyPressEvent(QKeyEvent *keyEvent)
+void DolphinUrlNavigator::paintEvent(QPaintEvent *event)
 {
-    if (keyEvent->key() == Qt::Key_Escape && !isUrlEditable()) {
-        Q_EMIT requestToLoseFocus();
-        return;
+    QPainter painter(this);
+    painter.setRenderHint(QPainter::Antialiasing);
+
+    const auto &s = M3ColorEngine::instance()->scheme();
+    QRectF r = rect();
+    r.adjust(1.5, 1.5, -1.5, -1.5);
+    const qreal radius = qMin(r.height() / 2.0, 24.0);
+
+    QPainterPath path;
+    path.addRoundedRect(r, radius, radius);
+
+    // MD3 surfaceContainer background
+    painter.fillPath(path, s.surfaceContainer);
+
+    if (hasFocus() || isUrlEditable()) {
+        QPen pen(s.primary, 2.0);
+        painter.strokePath(path, pen);
+    } else {
+        QPen pen(s.outlineVariant, 1.0);
+        painter.strokePath(path, pen);
     }
-    KUrlNavigator::keyPressEvent(keyEvent);
+
+    KUrlNavigator::paintEvent(event);
 }
 
 #include "moc_dolphinurlnavigator.cpp"

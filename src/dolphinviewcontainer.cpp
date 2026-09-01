@@ -18,6 +18,7 @@
 #include "filterbar/filterbar.h"
 #include "global.h"
 #include "kitemviews/kitemlistcontainer.h"
+#include "m3colorengine.h"
 #include "search/bar.h"
 #include "selectionmode/topbar.h"
 #include "statusbar/dolphinstatusbar.h"
